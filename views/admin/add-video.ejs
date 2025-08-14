@@ -1,0 +1,111 @@
+<%- include('../layouts/admin', { title: 'Add Video - Admin Panel' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-plus me-2"></i>Add Video</h1>
+    <a href="/admin/videos" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Videos
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>Add Video by URL
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                    </div>
+                <% } %>
+                
+                <form method="POST" action="/admin/videos/add">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">Video URL *</label>
+                        <input type="url" class="form-control" id="url" name="url" 
+                               placeholder="https://example.com/video.mp4" required>
+                        <div class="form-text">Direct link to the video file</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               placeholder="Enter video title">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="3" placeholder="Enter video description"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="model_name" class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="model_name" name="model_name" 
+                               placeholder="Enter model name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="tags" name="tags" 
+                               placeholder="tag1, tag2, tag3">
+                        <div class="form-text">Separate tags with commas</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Upload Video
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Upload Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Single Upload</h6>
+                    <ul class="mb-0">
+                        <li>Videos are marked as "finished" by default</li>
+                        <li>Automatically creates thumbnail</li>
+                        <li>Generates embed code</li>
+                        <li>Available immediately after upload</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-clock me-2"></i>Upload Process</h6>
+                    <ul class="mb-0">
+                        <li>Video will be uploaded to VidGuard</li>
+                        <li>Processing may take a few minutes</li>
+                        <li>You'll be redirected to video list</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="/admin/videos/mass-upload" class="btn btn-success w-100 mb-2">
+                    <i class="fas fa-upload me-2"></i>Mass Upload
+                </a>
+                <a href="/admin/videos" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-list me-2"></i>View All Videos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

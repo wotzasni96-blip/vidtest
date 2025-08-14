@@ -1,0 +1,162 @@
+<%- include('../layouts/admin', { title: 'Edit Video - Admin Panel' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-edit me-2"></i>Edit Video</h1>
+    <a href="/admin/videos" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Videos
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Edit Video Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/admin/videos/edit/<%= video.id %>">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="<%= video.title %>" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="3"><%= video.description || '' %></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="model_name" class="form-label">Model Name</label>
+                        <input type="text" class="form-control" id="model_name" name="model_name" 
+                               value="<%= video.model_name || '' %>">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="tags" name="tags" 
+                               value="<%= video.tags ? video.tags.join(', ') : '' %>">
+                        <div class="form-text">Separate tags with commas</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="finished" name="finished" 
+                                   value="true" <%= video.finished ? 'checked' : '' %>>
+                            <label class="form-check-label" for="finished">
+                                Mark as finished (published)
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Unfinished videos are not visible to users
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="/admin/videos" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Video Preview -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-eye me-2"></i>Video Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (video.embed_code) { %>
+                    <div class="ratio ratio-16x9 mb-3">
+                        <%- video.embed_code %>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-video fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Video not ready yet</p>
+                    </div>
+                <% } %>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-primary"><%= video.views %></h5>
+                        <small class="text-muted">Views</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success"><%= video.tags ? video.tags.length : 0 %></h5>
+                        <small class="text-muted">Tags</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Info -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Video Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">ID:</dt>
+                    <dd class="col-sm-8"><%= video.id %></dd>
+                    
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        <% if (video.finished) { %>
+                            <span class="badge bg-success">Published</span>
+                        <% } else { %>
+                            <span class="badge bg-warning">Draft</span>
+                        <% } %>
+                    </dd>
+                    
+                    <dt class="col-sm-4">Created:</dt>
+                    <dd class="col-sm-8"><%= new Date(video.created_at).toLocaleDateString() %></dd>
+                    
+                    <dt class="col-sm-4">Updated:</dt>
+                    <dd class="col-sm-8"><%= new Date(video.updated_at).toLocaleDateString() %></dd>
+                </dl>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="/video/<%= video.id %>" target="_blank" class="btn btn-info w-100 mb-2">
+                    <i class="fas fa-external-link-alt me-2"></i>View on Site
+                </a>
+                <button type="button" class="btn btn-danger w-100" 
+                        onclick="deleteVideo(<%= video.id %>, '<%= video.title %>')">
+                    <i class="fas fa-trash me-2"></i>Delete Video
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteVideo(videoId, title) {
+    if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/videos/delete/${videoId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>

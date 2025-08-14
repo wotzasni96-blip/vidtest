@@ -1,0 +1,224 @@
+<%- include('../layouts/admin', { title: 'Dashboard - Admin Panel' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h1>
+    <div>
+        <a href="/admin/videos/add" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-1"></i>Add Video
+        </a>
+        <a href="/admin/videos/mass-upload" class="btn btn-success">
+            <i class="fas fa-upload me-1"></i>Mass Upload
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-video fa-2x text-primary"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h3 class="mb-0"><%= statistics.totalVideos %></h3>
+                    <p class="text-muted mb-0">Total Videos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-eye fa-2x text-success"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h3 class="mb-0"><%= statistics.totalViews.toLocaleString() %></h3>
+                    <p class="text-muted mb-0">Total Views</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-clock fa-2x text-warning"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h3 class="mb-0"><%= unfinishedVideos.length %></h3>
+                    <p class="text-muted mb-0">Pending Videos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-star fa-2x text-info"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h3 class="mb-0"><%= statistics.newVideos.length %></h3>
+                    <p class="text-muted mb-0">New This Week</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unfinished Videos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Unfinished Videos
+                </h5>
+                <span class="badge bg-warning"><%= unfinishedVideos.length %></span>
+            </div>
+            <div class="card-body">
+                <% if (unfinishedVideos.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Model</th>
+                                    <th>Tags</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% unfinishedVideos.forEach(video => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= video.title %></strong>
+                                            <% if (video.video_id) { %>
+                                                <span class="badge bg-info ms-2">Uploading</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= video.model_name || 'Not set' %></td>
+                                        <td>
+                                            <% if (video.tags && video.tags.length > 0) { %>
+                                                <% video.tags.slice(0, 3).forEach(tag => { %>
+                                                    <span class="badge bg-secondary me-1"><%= tag %></span>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <span class="text-muted">No tags</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= new Date(video.created_at).toLocaleDateString() %></td>
+                                        <td>
+                                            <a href="/admin/videos/edit/<%= video.id %>" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <% if (video.video_id) { %>
+                                                <button class="btn btn-sm btn-info" onclick="checkUploadStatus(<%= video.id %>)">
+                                                    <i class="fas fa-sync"></i> Check Status
+                                                </button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">All videos are finished!</h5>
+                        <p class="text-muted">No pending videos to process.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>New Videos
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (statistics.newVideos.length > 0) { %>
+                    <div class="list-group list-group-flush">
+                        <% statistics.newVideos.forEach(video => { %>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><%= video.title %></h6>
+                                    <small class="text-muted">
+                                        <%= video.model_name || 'No model' %> • 
+                                        <%= video.views %> views
+                                    </small>
+                                </div>
+                                <a href="/admin/videos/edit/<%= video.id %>" class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center py-3">No new videos this week.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-fire me-2"></i>Most Viewed
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (statistics.mostViewed.length > 0) { %>
+                    <div class="list-group list-group-flush">
+                        <% statistics.mostViewed.forEach(video => { %>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><%= video.title %></h6>
+                                    <small class="text-muted">
+                                        <%= video.model_name || 'No model' %> • 
+                                        <%= video.views %> views
+                                    </small>
+                                </div>
+                                <a href="/admin/videos/edit/<%= video.id %>" class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <p class="text-muted text-center py-3">No trending videos yet.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkUploadStatus(videoId) {
+    fetch(`/admin/api/upload-status/${videoId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'finished') {
+                alert('Upload completed! The video is now ready.');
+                location.reload();
+            } else {
+                alert(`Upload status: ${data.status}`);
+            }
+        })
+        .catch(error => {
+            alert('Error checking upload status: ' + error.message);
+        });
+}
+</script>

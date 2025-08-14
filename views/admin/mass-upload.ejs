@@ -1,0 +1,145 @@
+<%- include('../layouts/admin', { title: 'Mass Upload - Admin Panel' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-upload me-2"></i>Mass Upload</h1>
+    <a href="/admin/videos" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Videos
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-files-o me-2"></i>Upload Multiple Videos
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                    </div>
+                <% } %>
+                
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i><%= success %>
+                    </div>
+                <% } %>
+                
+                <% if (typeof errors !== 'undefined' && errors && errors.length > 0) { %>
+                    <div class="alert alert-warning" role="alert">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Some uploads failed:</h6>
+                        <ul class="mb-0">
+                            <% errors.forEach(error => { %>
+                                <li><%= error %></li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% } %>
+                
+                <form method="POST" action="/admin/videos/mass-upload" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="videos" class="form-label">Select Video Files *</label>
+                        <input type="file" class="form-control" id="videos" name="videos" 
+                               multiple accept="video/*" required>
+                        <div class="form-text">
+                            Select multiple video files. Supported formats: MP4, AVI, MOV, MKV, WMV, FLV, WEBM
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Upload Progress</label>
+                        <div class="progress d-none" id="uploadProgress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div id="uploadStatus" class="text-muted"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="uploadBtn">
+                        <i class="fas fa-upload me-2"></i>Upload Videos
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Mass Upload Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Mass Upload</h6>
+                    <ul class="mb-0">
+                        <li>Videos are marked as "unfinished" by default</li>
+                        <li>You'll need to edit each video to add details</li>
+                        <li>Videos will be uploaded to VidGuard</li>
+                        <li>Processing happens in the background</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-clock me-2"></i>Important Notes</h6>
+                    <ul class="mb-0">
+                        <li>Large files may take time to upload</li>
+                        <li>Check upload status in dashboard</li>
+                        <li>Edit videos to add titles, models, tags</li>
+                        <li>Mark as "finished" when ready</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="/admin/videos/add" class="btn btn-primary w-100 mb-2">
+                    <i class="fas fa-plus me-2"></i>Single Upload
+                </a>
+                <a href="/admin/dashboard" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressBar = document.getElementById('uploadProgress');
+    const progressBarInner = progressBar.querySelector('.progress-bar');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    form.addEventListener('submit', function(e) {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+        progressBar.classList.remove('d-none');
+        uploadStatus.textContent = 'Starting upload...';
+        
+        // Simulate progress (in real implementation, you'd use AJAX with progress tracking)
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            progressBarInner.style.width = progress + '%';
+            progressBarInner.textContent = Math.round(progress) + '%';
+        }, 500);
+        
+        // Clear interval when form is submitted
+        setTimeout(() => {
+            clearInterval(interval);
+        }, 1000);
+    });
+});
+</script>

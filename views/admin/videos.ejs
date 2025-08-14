@@ -1,0 +1,136 @@
+<%- include('../layouts/admin', { title: 'All Videos - Admin Panel' }) %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-video me-2"></i>All Videos</h1>
+    <div>
+        <a href="/admin/videos/add" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-1"></i>Add Video
+        </a>
+        <a href="/admin/videos/mass-upload" class="btn btn-success">
+            <i class="fas fa-upload me-1"></i>Mass Upload
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Video Management</h5>
+    </div>
+    <div class="card-body">
+        <% if (videos && videos.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Model</th>
+                            <th>Tags</th>
+                            <th>Views</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% videos.forEach(video => { %>
+                            <tr>
+                                <td>
+                                    <strong><%= video.title %></strong>
+                                    <% if (!video.finished) { %>
+                                        <span class="badge bg-warning ms-2">Draft</span>
+                                    <% } %>
+                                </td>
+                                <td><%= video.model_name || 'Not set' %></td>
+                                <td>
+                                    <% if (video.tags && video.tags.length > 0) { %>
+                                        <% video.tags.slice(0, 3).forEach(tag => { %>
+                                            <span class="badge bg-secondary me-1"><%= tag %></span>
+                                        <% }) %>
+                                        <% if (video.tags.length > 3) { %>
+                                            <span class="badge bg-light text-dark">+<%= video.tags.length - 3 %></span>
+                                        <% } %>
+                                    <% } else { %>
+                                        <span class="text-muted">No tags</span>
+                                    <% } %>
+                                </td>
+                                <td><%= video.views %></td>
+                                <td>
+                                    <% if (video.finished) { %>
+                                        <span class="badge bg-success">Published</span>
+                                    <% } else { %>
+                                        <span class="badge bg-warning">Draft</span>
+                                    <% } %>
+                                </td>
+                                <td><%= new Date(video.created_at).toLocaleDateString() %></td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/admin/videos/edit/<%= video.id %>" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="/video/<%= video.id %>" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="deleteVideo(<%= video.id %>, '<%= video.title %>')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Video pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No videos found</h4>
+                <p class="text-muted">Start by adding your first video.</p>
+                <a href="/admin/videos/add" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Video
+                </a>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+function deleteVideo(videoId, title) {
+    if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/videos/delete/${videoId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
