@@ -89,11 +89,18 @@ install_postgresql() {
     # Install PostgreSQL
     sudo apt install -y postgresql postgresql-contrib
     
-    # Start and enable PostgreSQL service
-    sudo systemctl start postgresql
-    sudo systemctl enable postgresql
-    
-    print_success "PostgreSQL installed and started"
+    # Check if systemd is available
+    if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+        # Start and enable PostgreSQL service
+        sudo systemctl start postgresql
+        sudo systemctl enable postgresql
+        print_success "PostgreSQL installed and started via systemd"
+    else
+        # Fallback for non-systemd systems
+        print_warning "Systemd not available, using alternative service management"
+        sudo service postgresql start || sudo /etc/init.d/postgresql start
+        print_success "PostgreSQL installed and started via service/init.d"
+    fi
 }
 
 # Function to setup PostgreSQL database
@@ -139,11 +146,18 @@ install_nginx() {
     print_status "Installing Nginx..."
     sudo apt install -y nginx
     
-    # Start and enable Nginx
-    sudo systemctl start nginx
-    sudo systemctl enable nginx
-    
-    print_success "Nginx installed and started"
+    # Check if systemd is available
+    if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+        # Start and enable Nginx
+        sudo systemctl start nginx
+        sudo systemctl enable nginx
+        print_success "Nginx installed and started via systemd"
+    else
+        # Fallback for non-systemd systems
+        print_warning "Systemd not available, using alternative service management"
+        sudo service nginx start || sudo /etc/init.d/nginx start
+        print_success "Nginx installed and started via service/init.d"
+    fi
 }
 
 # Function to create project directory
@@ -222,9 +236,11 @@ setup_firewall() {
 create_systemd_service() {
     print_status "Creating systemd service for production..."
     
-    SERVICE_FILE="/etc/systemd/system/video-website.service"
-    
-    sudo tee "$SERVICE_FILE" > /dev/null << EOF
+    # Check if systemd is available
+    if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+        SERVICE_FILE="/etc/systemd/system/video-website.service"
+        
+        sudo tee "$SERVICE_FILE" > /dev/null << EOF
 [Unit]
 Description=Video Website Node.js Application
 After=network.target postgresql.service
@@ -242,12 +258,83 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
-    
-    # Reload systemd and enable service
-    sudo systemctl daemon-reload
-    sudo systemctl enable video-website
-    
-    print_success "Systemd service created and enabled"
+        
+        # Reload systemd and enable service
+        sudo systemctl daemon-reload
+        sudo systemctl enable video-website
+        
+        print_success "Systemd service created and enabled"
+    else
+        # Create init.d script for non-systemd systems
+        print_warning "Systemd not available, creating init.d script instead"
+        
+        INIT_SCRIPT="/etc/init.d/video-website"
+        
+        sudo tee "$INIT_SCRIPT" > /dev/null << EOF
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          video-website
+# Required-Start:    \$network \$remote_fs \$syslog
+# Required-Stop:     \$network \$remote_fs \$syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Video Website Node.js Application
+# Description:       Video Website Node.js Application
+### END INIT INFO
+
+DAEMON="/usr/bin/node"
+DAEMON_ARGS="server.js"
+DAEMON_DIR="$PROJECT_DIR"
+DAEMON_USER="$CURRENT_USER"
+PIDFILE="/var/run/video-website.pid"
+
+export NODE_ENV=production
+export PORT=3000
+
+case "\$1" in
+  start)
+    echo "Starting video-website..."
+    cd \$DAEMON_DIR
+    start-stop-daemon --start --background --make-pidfile --pidfile \$PIDFILE --chuid \$DAEMON_USER --exec \$DAEMON -- \$DAEMON_ARGS
+    ;;
+  stop)
+    echo "Stopping video-website..."
+    start-stop-daemon --stop --pidfile \$PIDFILE --retry 10
+    ;;
+  restart)
+    \$0 stop
+    sleep 1
+    \$0 start
+    ;;
+  status)
+    if [ -f \$PIDFILE ]; then
+      PID=\$(cat \$PIDFILE)
+      if kill -0 \$PID 2>/dev/null; then
+        echo "video-website is running (PID: \$PID)"
+        exit 0
+      else
+        echo "video-website is not running (stale PID file)"
+        exit 1
+      fi
+    else
+      echo "video-website is not running"
+      exit 1
+    fi
+    ;;
+  *)
+    echo "Usage: \$0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
+EOF
+        
+        sudo chmod +x "$INIT_SCRIPT"
+        sudo update-rc.d video-website defaults
+        
+        print_success "Init.d script created and enabled"
+    fi
 }
 
 # Function to setup Nginx configuration
@@ -287,7 +374,13 @@ EOF
     
     # Test and reload Nginx
     sudo nginx -t
-    sudo systemctl reload nginx
+    
+    # Check if systemd is available for reloading
+    if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+        sudo systemctl reload nginx
+    else
+        sudo service nginx reload || sudo /etc/init.d/nginx reload
+    fi
     
     print_success "Nginx configuration created and enabled"
 }
@@ -368,15 +461,29 @@ echo ""
 echo "=== Setup Complete! ==="
 echo "To start the application:"
 echo "  Development: npm run dev"
-echo "  Production:  sudo systemctl start video-website"
-echo ""
-echo "To view logs:"
-echo "  sudo journalctl -u video-website -f"
-echo ""
-echo "To update the application:"
-echo "  git pull"
-echo "  npm install"
-echo "  sudo systemctl restart video-website"
+
+# Check if systemd is available
+if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+    echo "  Production:  sudo systemctl start video-website"
+    echo ""
+    echo "To view logs:"
+    echo "  sudo journalctl -u video-website -f"
+    echo ""
+    echo "To update the application:"
+    echo "  git pull"
+    echo "  npm install"
+    echo "  sudo systemctl restart video-website"
+else
+    echo "  Production:  sudo service video-website start"
+    echo ""
+    echo "To view logs:"
+    echo "  Check /var/log/video-website.log or application logs"
+    echo ""
+    echo "To update the application:"
+    echo "  git pull"
+    echo "  npm install"
+    echo "  sudo service video-website restart"
+fi
 EOF
     
     chmod +x "$PROJECT_DIR/complete-setup.sh"
