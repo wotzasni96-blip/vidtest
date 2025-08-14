@@ -32,8 +32,8 @@ print_error() {
 # Function to check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
-        print_error "This script should not be run as root. Please run as a regular user with sudo privileges."
-        exit 1
+        print_warning "Running as root. This is allowed but not recommended for security reasons."
+        print_warning "Consider running as a regular user with sudo privileges instead."
     fi
 }
 
